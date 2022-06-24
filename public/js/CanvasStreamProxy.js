@@ -1,31 +1,23 @@
-'use strict'
-
 export default function CanvasStreamProxy() {
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
   const video = document.createElement('video')
-  let isCanvasUpdating = false
-
-  //init Web Worker
   const webWorker = createWebWorker()
+  let isCanvasUpdating = false
 
   this.createCanvasStream = stream => {
     if (isCanvasUpdating) {
-      console.error('Already drawing frames')
+      throw new Error('createCanvasStream: already drawing frames')
       return
     }
 
     if (!(stream instanceof MediaStream)) {
-      console.error('Invalid argument')
+      throw new Error('createCanvasStream: argument must be a MediaStream')
       return
     }
 
-    if (
-      !stream.getTracks().filter(function (t) {
-        return t.kind === 'video'
-      }).length
-    ) {
-      console.error('Video track is missing')
+    if (stream.getVideoTracks().length === 0) {
+      throw new Error('createCanvasStream: video track is missing')
       return
     }
 
@@ -38,21 +30,19 @@ export default function CanvasStreamProxy() {
 
   this.replaceVideoStream = stream => {
     if (!isCanvasUpdating) {
-      console.error('Currently stop drawing frames')
+      throw new Error('replaceVideoStream: canvas is not drawing frames')
+
       return
     }
 
     if (!(stream instanceof MediaStream)) {
-      console.error('Invalid arugment')
+      throw new Error('replaceVideoStream: argument must be a MediaStream')
       return
     }
 
-    if (
-      !stream.getTracks().filter(function (t) {
-        return t.kind === 'video'
-      }).length
-    ) {
-      console.error('Video track is missing')
+    if (stream.getVideoTracks().length === 0) {
+      console.error('replaceVideoStream: video track is missing')
+
       return
     }
 

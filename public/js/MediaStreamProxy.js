@@ -1,5 +1,3 @@
-'use strict'
-
 export default function MediaStreamProxy() {
   const offerOptions = {
     offerToReceiveAudio: 1,
@@ -22,14 +20,16 @@ export default function MediaStreamProxy() {
     try {
       await createLocalConnection(stream)
     } catch (error) {
-      console.log('Local Connection Fail')
+      console.error('Local Connection Fail')
+
       return Promise.reject(error)
     }
 
     try {
       remoteStream = await mediaStreamTrackPromise
     } catch (error) {
-      console.log('Rtp Receiver Error')
+      console.error('Rtp Receiver Error')
+
       return Promise.reject(error)
     }
 
@@ -54,8 +54,6 @@ export default function MediaStreamProxy() {
     mediaStreamTrackPromise = new Promise(resolve => {
       pc2.addEventListener('track', event => {
         if (remoteStream !== event.streams[0]) {
-          // remoteStream = event.streams[0];
-          // resolve();
           resolve(event.streams[0])
         }
       })
@@ -63,16 +61,12 @@ export default function MediaStreamProxy() {
 
     // Right now, only use video track
     localStream.getTracks().forEach(track => {
-      if (track.kind == 'video') {
+      if (track.kind === 'video') {
         videoSender = pc1.addTrack(track, localStream)
       }
-      /*if (track.kind == "audio") {
-        audioSender = pc1.addTrack(track, localStream)
-      }*/
     })
 
     try {
-      console.log('pc1 createOffer start')
       const offer = await pc1.createOffer(offerOptions)
       await onCreateOfferSuccess(offer)
     } catch (error) {
@@ -82,12 +76,13 @@ export default function MediaStreamProxy() {
   }
 
   function onCreateSessionDescriptionError(error) {
-    console.log(`Failed to create session description: ${error.toString()}`)
+    console.error(`Failed to create session description: ${error.toString()}`)
   }
 
   async function onCreateOfferSuccess(desc) {
     console.log(`Offer from pc1\n${desc.sdp}`)
     console.log('pc1 setLocalDescription start')
+
     try {
       await pc1.setLocalDescription(desc)
       onSetLocalSuccess(pc1)
@@ -97,6 +92,7 @@ export default function MediaStreamProxy() {
     }
 
     console.log('pc2 setRemoteDescription start')
+
     try {
       await pc2.setRemoteDescription(desc)
       onSetRemoteSuccess(pc2)
@@ -106,6 +102,7 @@ export default function MediaStreamProxy() {
     }
 
     console.log('pc2 createAnswer start')
+
     try {
       const answer = await pc2.createAnswer()
       await onCreateAnswerSuccess(answer)
@@ -124,12 +121,13 @@ export default function MediaStreamProxy() {
   }
 
   function onSetSessionDescriptionError(error) {
-    console.log(`Failed to set session description: ${error.toString()}`)
+    console.error(`Failed to set session description: ${error.toString()}`)
   }
 
   async function onCreateAnswerSuccess(desc) {
     console.log(`Answer from pc2:\n${desc.sdp}`)
     console.log('pc2 setLocalDescription start')
+
     try {
       await pc2.setLocalDescription(desc)
       onSetLocalSuccess(pc2)
@@ -137,7 +135,9 @@ export default function MediaStreamProxy() {
       onSetSessionDescriptionError(error)
       return Promise.reject(error)
     }
+
     console.log('pc1 setRemoteDescription start')
+
     try {
       await pc1.setRemoteDescription(desc)
       onSetRemoteSuccess(pc1)
@@ -167,7 +167,7 @@ export default function MediaStreamProxy() {
   }
 
   function onAddIceCandidateError(pc, error) {
-    console.log(
+    console.error(
       `${getName(pc)} failed to add ICE Candidate: ${error.toString()}`,
     )
   }
@@ -187,10 +187,6 @@ export default function MediaStreamProxy() {
     return pc === pc1 ? pc2 : pc1
   }
 
-  /*this.getMediaStream = () => {
-    return remoteStream;
-  }*/
-
   this.replaceVideoTrack = track => {
     videoSender.replaceTrack(track)
   }
@@ -204,8 +200,6 @@ export default function MediaStreamProxy() {
     remoteStream.getTracks().forEach(track => track.stop())
     pc1.close()
     pc2.close()
-
-    // clear variable
     pc1 = null
     pc2 = null
     localStream = null
